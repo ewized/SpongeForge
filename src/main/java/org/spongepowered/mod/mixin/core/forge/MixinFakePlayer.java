@@ -22,34 +22,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.spongepowered.mod.mixin.core.event.player;
+package org.spongepowered.mod.mixin.core.forge;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import org.spongepowered.api.event.cause.Cause;
-import org.spongepowered.api.event.cause.NamedCause;
-import org.spongepowered.api.util.annotation.NonnullByDefault;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.FakePlayer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.mod.mixin.core.event.entity.living.MixinEventLiving;
+import org.spongepowered.common.world.SimulatedPlayer;
 
-@NonnullByDefault
-@Mixin(value = PlayerEvent.class, remap = false)
-public abstract class MixinEventPlayer extends MixinEventLiving {
+@Mixin(value = FakePlayer.class, remap = false)
+public abstract class MixinFakePlayer extends EntityPlayerMP implements org.spongepowered.common.world.FakePlayer {
 
-    @Shadow public EntityPlayer entityPlayer;
-    protected Cause cause;
-
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void onConstruct(CallbackInfo callbackInfo) {
-        this.cause = Cause.of(NamedCause.source(this.entityPlayer));
+    public MixinFakePlayer() {
+        super(null, null, null, null);
     }
 
-    @Override
-    public Cause getCause() {
-        return this.cause;
+    @Inject(method = "<init>", at = @At("RETURN") )
+    private void onConstructed(WorldServer worldIn, GameProfile profile, CallbackInfo ci) {
+        this.playerNetServerHandler = new SimulatedPlayer.FakeNetHandler(this);
     }
+
 }

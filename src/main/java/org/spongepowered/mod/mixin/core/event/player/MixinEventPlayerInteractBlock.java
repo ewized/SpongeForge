@@ -37,6 +37,8 @@ import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.block.InteractBlockEvent;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.event.cause.NamedCause;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.api.world.Location;
@@ -49,6 +51,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.registry.provider.DirectionFacingProvider;
 import org.spongepowered.common.util.StaticMixinHelper;
 import org.spongepowered.common.util.VecHelper;
+import org.spongepowered.common.world.FakePlayer;
 import org.spongepowered.mod.util.StaticMixinForgeHelper;
 
 import java.util.Optional;
@@ -73,6 +76,12 @@ public abstract class MixinEventPlayerInteractBlock extends MixinEventPlayer imp
                 this.blockSnapshot = BlockTypes.AIR.getDefaultState().snapshotFor(new Location<>((World) world, Vector3i.ZERO));
             }
             StaticMixinHelper.lastPlayerInteractCancelled = false;
+        }
+        // Handle fake players
+        if (FakePlayer.Controller.getCurrentCause() != null) {
+            this.cause = FakePlayer.Controller.getCurrentCause();
+        } else if (player instanceof FakePlayer) {
+            this.cause = Cause.of(NamedCause.simulated(player.getGameProfile()));
         }
     }
 
@@ -110,9 +119,9 @@ public abstract class MixinEventPlayerInteractBlock extends MixinEventPlayer imp
 
     @Override
     public Event createSpongeEvent() {
-        if (action == Action.LEFT_CLICK_BLOCK) {
+        if (this.action == Action.LEFT_CLICK_BLOCK) {
             return SpongeEventFactory.createInteractBlockEventPrimary(getCause(), getInteractionPoint(), getTargetBlock(), getTargetSide());
-        } else if (action == Action.RIGHT_CLICK_AIR) {
+        } else if (this.action == Action.RIGHT_CLICK_AIR) {
             return SpongeEventFactory.createInteractBlockEventSecondary(getCause(), getInteractionPoint(), getTargetBlock().withState(BlockTypes.AIR.getDefaultState()), getTargetSide());
         } else {
             return SpongeEventFactory.createInteractBlockEventSecondary(getCause(), getInteractionPoint(), getTargetBlock(), getTargetSide());
