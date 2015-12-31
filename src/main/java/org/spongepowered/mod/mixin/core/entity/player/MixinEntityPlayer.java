@@ -40,6 +40,7 @@ import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.action.SleepingEvent;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.util.Tuple;
 import org.spongepowered.api.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -66,6 +67,7 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
     @Shadow protected boolean sleeping;
     @Shadow private int sleepTimer;
     @Shadow private BlockPos spawnChunk;
+    @Shadow private boolean spawnForced;
     @Shadow(remap = false) private HashMap<Integer, BlockPos> spawnChunkMap;
     @Shadow(remap = false) private HashMap<Integer, Boolean> spawnForcedMap;
 
@@ -114,7 +116,7 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
             if (post.isCancelled()) {
                 return;
             }
-    
+
             net.minecraftforge.event.ForgeEventFactory.onPlayerWakeup(this.nmsPlayer, immediately, updateWorldFlag, setSpawn);
             this.setSize(0.6F, 1.8F);
             if (post.getSpawnTransform().isPresent()) {
@@ -137,7 +139,7 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
             if (setSpawn) {
                 this.setSpawnPoint(post.getSpawnTransform().isPresent() ? VecHelper.toBlockPos(post.getSpawnTransform().get().getPosition()) : this.playerLocation, false);
             }
-    
+
             Sponge.getGame().getEventManager().post(SpongeEventFactory.createSleepingEventFinish(post.getCause(), this.getWorld().createSnapshot(VecHelper.toVector(this.playerLocation)), this));
         } else {
             if (setSpawn) {
@@ -147,40 +149,40 @@ public abstract class MixinEntityPlayer extends MixinEntityLivingBase implements
     }
 
     @Override
-    public Map<UUID, Vector3d> getBedlocations() {
-        Map<UUID, Vector3d> locations = Maps.newHashMap();
+    public Map<UUID, Tuple<Vector3d, Boolean>> getBedlocations() {
+        Map<UUID, Tuple<Vector3d, Boolean>> locations = Maps.newHashMap();
         if (this.spawnChunk != null) {
-            locations.put(WorldPropertyRegistryModule.dimIdToUuid(0), VecHelper.toVector3d(this.spawnChunk));
+            locations.put(WorldPropertyRegistryModule.dimIdToUuid(0), new Tuple<>(VecHelper.toVector3d(this.spawnChunk), this.spawnForced));
         }
         for (Entry<Integer, BlockPos> entry : this.spawnChunkMap.entrySet()) {
             UUID uuid = WorldPropertyRegistryModule.dimIdToUuid(entry.getKey());
             if (uuid != null) {
-                locations.put(uuid, VecHelper.toVector3d(entry.getValue()));
+                Boolean forced = this.spawnForcedMap.get(entry.getKey());
+                locations.put(uuid, new Tuple<>(VecHelper.toVector3d(entry.getValue()), forced == null ? false : forced));
             }
         }
         return locations;
     }
 
     @Override
-    public boolean setBedLocations(Map<UUID, Vector3d> locations) {
+    public boolean setBedLocations(Map<UUID, Tuple<Vector3d, Boolean>> locations) {
         // Clear all existing values
         this.spawnChunkMap.clear();
         this.spawnForcedMap.clear();
         setSpawnChunk(null, false, 0);
         // Add replacement values
-        for (Entry<UUID, Vector3d> entry : locations.entrySet()) {
+        for (Entry<UUID, Tuple<Vector3d, Boolean>> entry : locations.entrySet()) {
             int dim = WorldPropertyRegistryModule.uuidToDimId(entry.getKey());
             if (dim != Integer.MIN_VALUE) {
-                // Note: No way to set 'force' parameter
-                setSpawnChunk(VecHelper.toBlockPos(entry.getValue()), false, dim);
+                setSpawnChunk(VecHelper.toBlockPos(entry.getValue().getFirst()), entry.getValue().getSecond(), dim);
             }
         }
         return true;
     }
 
     @Override
-    public ImmutableMap<UUID, Vector3d> removeAllBeds() {
-        ImmutableMap<UUID, Vector3d> locations = ImmutableMap.copyOf(getBedlocations());
+    public ImmutableMap<UUID, Tuple<Vector3d, Boolean>> removeAllBeds() {
+        ImmutableMap<UUID, Tuple<Vector3d, Boolean>> locations = ImmutableMap.copyOf(getBedlocations());
         this.spawnChunkMap.clear();
         this.spawnForcedMap.clear();
         setSpawnChunk(null, false, 0);
