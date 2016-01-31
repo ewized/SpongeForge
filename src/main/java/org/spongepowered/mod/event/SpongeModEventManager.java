@@ -136,6 +136,7 @@ public class SpongeModEventManager extends SpongeEventManager {
                     .put(ClientConnectionEvent.Join.class, PlayerEvent.PlayerLoggedInEvent.class)
                     .put(ClientConnectionEvent.Disconnect.class, PlayerEvent.PlayerLoggedOutEvent.class)
                     .put(SleepingEvent.Pre.class, PlayerSleepInBedEvent.class)
+                    .put(DropItemEvent.Destruct.class, LivingDropsEvent.class)
                     .build();
 
     public static final ImmutableMap<Class<? extends Event>, Class<? extends net.minecraftforge.fml.common.eventhandler.Event>> eventBulkMappings =

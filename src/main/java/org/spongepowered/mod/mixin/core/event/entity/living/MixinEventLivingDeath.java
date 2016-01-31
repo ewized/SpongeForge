@@ -29,10 +29,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.NamedCause;
+import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnCause;
+import org.spongepowered.api.event.cause.entity.spawn.SpawnTypes;
 import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
@@ -47,6 +51,8 @@ import org.spongepowered.common.interfaces.entity.IMixinEntity;
 import org.spongepowered.common.text.SpongeTexts;
 import org.spongepowered.common.util.StaticMixinHelper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -90,12 +96,16 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
             this.cause = Cause.of(NamedCause.source(this.source), NamedCause.of("Victim", this.entityLiving));
         }
         // Store cause for drop event which is called after this event
+        List<NamedCause> causes = new ArrayList<>();
+        causes.add(NamedCause.source(EntitySpawnCause.builder()
+                .entity(((Entity) this.entityLiving))
+                .type(SpawnTypes.DROPPED_ITEM)
+                .build()));
+        causes.add(NamedCause.of("Attacker", this.source));
         if (this.sourceCreator.isPresent()) {
-            StaticMixinHelper.dropCause = Cause.of(NamedCause.source(this.entityLiving), NamedCause.of("Attacker", this.source),
-                NamedCause.owner(this.sourceCreator.get()));
-        } else {
-            StaticMixinHelper.dropCause = Cause.of(NamedCause.source(this.entityLiving), NamedCause.of("Attacker", this.source));
+            causes.add(NamedCause.owner(this.sourceCreator.get()));
         }
+        StaticMixinHelper.dropCause = Cause.of(causes);
     }
 
     @Override
