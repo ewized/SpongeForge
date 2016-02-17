@@ -64,7 +64,7 @@ public class SpongeGuiceModule extends AbstractModule {
         bind(SpongeMod.class).toInstance(SpongeMod.instance);
         bind(Logger.class).toInstance(LogManager.getLogger(SpongeImpl.ECOSYSTEM_NAME));
 
-        bind(PluginContainer.class).annotatedWith(named(SpongeImpl.ECOSYSTEM_NAME)).toInstance(SpongeMod.instance);
+        bind(PluginContainer.class).annotatedWith(named(SpongeImpl.ECOSYSTEM_NAME)).toInstance((PluginContainer) SpongeMod.instance);
         bind(PluginContainer.class).annotatedWith(named(SpongeImpl.API_NAME)).to(SpongeApiContainer.class).in(Scopes.SINGLETON);
         bind(PluginContainer.class).annotatedWith(named("Minecraft")).toInstance((PluginContainer) Loader.instance().getMinecraftModContainer());
 
