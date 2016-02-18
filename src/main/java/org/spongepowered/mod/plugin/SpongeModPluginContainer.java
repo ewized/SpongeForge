@@ -45,6 +45,7 @@ import net.minecraftforge.fml.common.discovery.ModCandidate;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
+import net.minecraftforge.fml.common.versioning.VersionParser;
 import net.minecraftforge.fml.common.versioning.VersionRange;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.plugin.PluginContainer;
@@ -152,7 +153,7 @@ public class SpongeModPluginContainer implements ModContainer, PluginContainerEx
                     if (isNullOrEmpty(depVersion)) {
                         dependency = new DefaultArtifactVersion(dep, true);
                     } else {
-                        dependency = new DefaultArtifactVersion(dep, depVersion);
+                        dependency = new DefaultArtifactVersion(dep, VersionParser.parseRange(depVersion));
                     }
 
                     Boolean optional = (Boolean) depDescriptor.get("optional");
