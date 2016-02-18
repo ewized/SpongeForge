@@ -24,6 +24,7 @@
  */
 package org.spongepowered.mod.mixin.core.fml.common;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.emptyToNull;
 
 import com.google.common.collect.ImmutableList;
@@ -47,11 +48,7 @@ import java.util.Optional;
 public interface MixinModContainer extends ModContainer {
 
     default String getId() {
-        return getModId();
-    }
-
-    default Optional<String> plugin$getName() {
-        return Optional.ofNullable(emptyToNull(getName()));
+        return checkNotNull(emptyToNull(getModId()), "modid");
     }
 
     default Optional<String> plugin$getVersion() {
