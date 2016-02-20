@@ -288,7 +288,7 @@ public class SpongeMod extends DummyModContainer {
     }
 
     // This overrides the method in PluginContainer
-    // (PluginContainer is mplemented indirectly through the ModContainer mixin)
+    // (PluginContainer is implemented indirectly through the ModContainer mixin)
     public Logger getLogger() {
         return SpongeImpl.getSlf4jLogger();
     }
