@@ -84,6 +84,8 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
 
         this.rawSpongeMessage = Text.of(message);
         this.originalSpongeMessage = SpongeTexts.toText(component);
+        this.formatter.getHeader().setParameter(ChatMessageFormatter.PARAM_SOURCE, SpongeTexts.toText(sourceComponent));
+        this.formatter.getBody().setParameter(ChatMessageFormatter.PARAM_MESSAGE, SpongeTexts.toText(bodyComponent));
         this.originalChannel = this.channel = ((Player) player).getMessageChannel();
     }
 
