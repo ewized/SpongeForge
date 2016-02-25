@@ -27,13 +27,16 @@ package org.spongepowered.mod.mixin.core.event.player;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.TextFormatter;
+import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.channel.MessageChannel;
+import org.spongepowered.api.text.chat.ChatMessageFormatter;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,7 +46,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.common.interfaces.IMixinInitCause;
 import org.spongepowered.common.text.SpongeTexts;
-import org.spongepowered.mod.interfaces.IMixinEventPlayerChat;
 import org.spongepowered.mod.mixin.core.fml.common.eventhandler.MixinEvent;
 
 import java.util.Optional;
@@ -52,10 +54,14 @@ import javax.annotation.Nullable;
 
 @NonnullByDefault
 @Mixin(value = ServerChatEvent.class, remap = false)
-public abstract class MixinEventPlayerChat extends MixinEvent implements MessageChannelEvent.Chat, IMixinEventPlayerChat, IMixinInitCause {
+public abstract class MixinEventPlayerChat extends MixinEvent implements MessageChannelEvent.Chat, IMixinInitCause {
 
+    private static final String PARAM_FORGE_MOD = "forge";
+
+    private ChatComponentTranslation forgeComponent;
+
+    private final ChatMessageFormatter formatter = new ChatMessageFormatter();
     private Text originalSpongeMessage;
-    @Nullable private Text spongeMessage;
     private Text rawSpongeMessage;
     private MessageChannel originalChannel;
     @Nullable private MessageChannel channel;
@@ -67,7 +73,17 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
 
     @Inject(method = "<init>", at = @At("RETURN"))
     public void onConstructed(EntityPlayerMP player, String message, ChatComponentTranslation component, CallbackInfo ci) {
-        this.originalSpongeMessage = this.spongeMessage = SpongeTexts.toText(component);
+        // see net.minecraft.network.NetHandlerPlayServer.processChatMessage@net.minecraftforge.common.ForgeHooks.onServerChatEvent
+        // this is the same way forge constructs it's messages except it
+        // separates the player name and message. The above component will
+        // always be a combination of the two components below when the event
+        // is initialized by Forge
+        this.forgeComponent = component;
+        ChatComponentTranslation sourceComponent = new ChatComponentTranslation("chat.type.text", player.getDisplayName());
+        ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
+
+        this.rawSpongeMessage = Text.of(message);
+        this.originalSpongeMessage = SpongeTexts.toText(component);
         this.originalChannel = this.channel = ((Player) player).getMessageChannel();
     }
 
@@ -82,32 +98,23 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     }
 
     @Override
-    public Optional<Text> getOriginalMessage() {
-        return Optional.of(this.originalSpongeMessage);
+    public Text getOriginalMessage() {
+        return this.originalSpongeMessage;
     }
 
     @Override
-    public Optional<Text> getMessage() {
-        return Optional.ofNullable(this.spongeMessage);
+    public ChatMessageFormatter getFormatter() {
+        return this.formatter;
     }
 
-    // TODO: Better integration with forge mods?
     @Override
-    public void setMessage(@Nullable Text message) {
-        this.spongeMessage = message;
-        if (this.spongeMessage != null) {
-            this.setComponent(SpongeTexts.toComponent(this.spongeMessage));
-        }
+    public Text getMessage() {
+        return this.formatter.format();
     }
 
     @Override
     public Text getRawMessage() {
         return this.rawSpongeMessage;
-    }
-
-    @Override
-    public void setRawMessage(Text rawMessage) {
-        this.rawSpongeMessage = rawMessage;
     }
 
     @Override
@@ -126,10 +133,18 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     }
 
     @Override
-    public void syncDataToSponge(Event forgeEvent) {
+    public void syncDataToSponge(net.minecraftforge.fml.common.eventhandler.Event forgeEvent) {
         super.syncDataToSponge(forgeEvent);
-
         ServerChatEvent event = (ServerChatEvent) forgeEvent;
-        this.spongeMessage = SpongeTexts.toText(event.getComponent());
+        IChatComponent component = event.getComponent();
+        if (!component.equals(this.forgeComponent)) {
+            // if the chat has been changed by a forge mod, abandon hope of
+            // separating into different parts, clear the formatter and put the
+            // message in it's own part
+            this.formatter.clear();
+            TextFormatter.Part body = this.formatter.getBody();
+            body.setTemplate(TextTemplate.of(TextTemplate.arg(PARAM_FORGE_MOD)));
+            this.formatter.add(body);
+        }
     }
 }

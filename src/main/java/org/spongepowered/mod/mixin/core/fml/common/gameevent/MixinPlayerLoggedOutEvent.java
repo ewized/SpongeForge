@@ -61,12 +61,12 @@ public abstract class MixinPlayerLoggedOutEvent extends MixinPlayerEvent impleme
     }
 
     @Override
-    public Optional<Text> getOriginalMessage() {
+    public Text getOriginalMessage() {
         return Optional.ofNullable(this.originalMessage);
     }
 
     @Override
-    public Optional<Text> getMessage() {
+    public Text getMessage() {
         return Optional.ofNullable(this.message);
     }
 
