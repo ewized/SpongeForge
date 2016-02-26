@@ -54,11 +54,10 @@ import javax.annotation.Nullable;
 @Mixin(value = LivingDeathEvent.class, remap = false)
 public abstract class MixinEventLivingDeath extends MixinEventLiving implements DestructEntityEvent.Death {
 
+    private final MessageFormatter formatter = new MessageFormatter();
+    private Text originalMessage;
     @Nullable private MessageChannel channel;
     private MessageChannel originalChannel;
-    @Nullable private Text originalMessage;
-    @Nullable private Text message;
-    private Optional<User> sourceCreator;
     private Cause cause;
 
     @Shadow @Final public DamageSource source;
@@ -75,24 +74,24 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
         }
 
         this.originalMessage = SpongeTexts.toText(entity.getCombatTracker().getDeathMessage());
-        this.message = SpongeTexts.toText(entity.getCombatTracker().getDeathMessage());
-        this.sourceCreator = Optional.empty();
+        this.formatter.getBody().add(new DefaultBodyApplier(this.originalMessage));
+        Optional<User> sourceCreator = Optional.empty();
 
         if (this.source instanceof EntityDamageSource) {
             EntityDamageSource damageSource = (EntityDamageSource) this.source;
             IMixinEntity spongeEntity = (IMixinEntity) damageSource.getSourceOfDamage();
-            this.sourceCreator = spongeEntity.getTrackedPlayer(NbtDataUtil.SPONGE_ENTITY_CREATOR);
+            sourceCreator = spongeEntity.getTrackedPlayer(NbtDataUtil.SPONGE_ENTITY_CREATOR);
         }
-        if (this.sourceCreator.isPresent()) {
+        if (sourceCreator.isPresent()) {
             this.cause = Cause.of(NamedCause.source(this.source), NamedCause.of("Victim", this.entityLiving),
-                NamedCause.owner(this.sourceCreator.get()));
+                NamedCause.owner(sourceCreator.get()));
         } else {
             this.cause = Cause.of(NamedCause.source(this.source), NamedCause.of("Victim", this.entityLiving));
         }
         // Store cause for drop event which is called after this event
-        if (this.sourceCreator.isPresent()) {
+        if (sourceCreator.isPresent()) {
             StaticMixinHelper.dropCause = Cause.of(NamedCause.source(this.entityLiving), NamedCause.of("Attacker", this.source),
-                NamedCause.owner(this.sourceCreator.get()));
+                NamedCause.owner(sourceCreator.get()));
         } else {
             StaticMixinHelper.dropCause = Cause.of(NamedCause.source(this.entityLiving), NamedCause.of("Attacker", this.source));
         }
@@ -115,17 +114,7 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
 
     @Override
     public Text getOriginalMessage() {
-        return Optional.ofNullable(this.originalMessage);
-    }
-
-    @Override
-    public Text getMessage() {
-        return Optional.ofNullable(this.message);
-    }
-
-    @Override
-    public void setMessage(@Nullable Text message) {
-        this.message = message;
+        return this.originalMessage;
     }
 
     @Override

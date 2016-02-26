@@ -44,8 +44,8 @@ import javax.annotation.Nullable;
 @Mixin(value = PlayerEvent.PlayerLoggedOutEvent.class, remap = false)
 public abstract class MixinPlayerLoggedOutEvent extends MixinPlayerEvent implements ClientConnectionEvent.Disconnect, IMixinInitMessageChannelEvent, IMixinInitCause {
 
-    @Nullable private Text originalMessage;
-    @Nullable private Text message;
+    private final MessageFormatter formatter = new MessageFormatter();
+    private Text originalMessage;
     private MessageChannel originalChannel;
     @Nullable private MessageChannel channel;
     private Cause cause;
@@ -62,23 +62,13 @@ public abstract class MixinPlayerLoggedOutEvent extends MixinPlayerEvent impleme
 
     @Override
     public Text getOriginalMessage() {
-        return Optional.ofNullable(this.originalMessage);
+        return this.originalMessage;
     }
 
     @Override
-    public Text getMessage() {
-        return Optional.ofNullable(this.message);
-    }
-
-    @Override
-    public void setMessage(@Nullable Text message) {
-        this.message = message;
-    }
-
-    @Override
-    public void initMessage(@Nullable Text original, @Nullable Text message) {
+    public void initMessage(Text original, Text message) {
         this.originalMessage = original;
-        this.message = message;
+        this.formatter.getBody().add(new DefaultBodyApplier(message));
     }
 
     @Override

@@ -30,6 +30,7 @@ import net.minecraft.util.IChatComponent;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.ServerChatEvent;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.event.Event;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.text.Text;
@@ -127,13 +128,19 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     }
 
     @Override
+    public void syncDataToForge(Event spongeEvent) {
+        super.syncDataToForge(spongeEvent);
+        ServerChatEvent forgeEvent = (ServerChatEvent) spongeEvent;
+        forgeEvent.setComponent(SpongeTexts.toComponent(getMessage()));
+    }
+
+    @Override
     public void syncDataToSponge(net.minecraftforge.fml.common.eventhandler.Event forgeEvent) {
         super.syncDataToSponge(forgeEvent);
         ServerChatEvent event = (ServerChatEvent) forgeEvent;
         IChatComponent component = event.getComponent();
         if (!component.equals(this.forgeComponent)) {
-            // TODO: what to do if a forge mod changes the text, therefore
-            // mucking up the partitioned message
+            setMessage(SpongeTexts.toText(event.getComponent()));
         }
     }
 }
