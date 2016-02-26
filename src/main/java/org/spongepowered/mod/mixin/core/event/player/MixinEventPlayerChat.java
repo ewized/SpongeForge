@@ -70,7 +70,6 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     @Inject(method = "<init>", at = @At("RETURN"))
     public void onConstructed(EntityPlayerMP player, String message, ChatComponentTranslation component, CallbackInfo ci) {
         this.forgeComponent = component;
-        System.out.println(">>> component = " + component);
         Text source = null;
         Text body = null;
         for (Object arg : component.getFormatArgs()) {

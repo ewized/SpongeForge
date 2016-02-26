@@ -785,7 +785,7 @@ public class SpongeForgeEventFactory {
             return null;
         }
 
-        if (!spongeEvent.isMessageCancelled()) {
+        if (!spongeEvent.getOriginalMessage().isPresent()) {
             return null;
         }
 
