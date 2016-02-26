@@ -32,10 +32,8 @@ import net.minecraftforge.event.ServerChatEvent;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.message.MessageChannelEvent;
-import org.spongepowered.api.event.message.MessageEvent;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
-import org.spongepowered.api.text.transform.SimpleTextTemplateApplier;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -80,13 +78,8 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         ChatComponentTranslation sourceComponent = new ChatComponentTranslation("chat.type.text", player.getDisplayName());
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
-        SimpleTextTemplateApplier header = new DefaultHeaderApplier();
-        header.setParameter(MessageEvent.PARAM_MESSAGE_HEADER, SpongeTexts.toText(sourceComponent));
-        this.formatter.getHeader().add(header);
-
-        SimpleTextTemplateApplier body = new DefaultBodyApplier();
-        body.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
-        this.formatter.getBody().add(body);
+        this.formatter.getHeader().add(new DefaultHeaderApplier(SpongeTexts.toText(sourceComponent)));
+        this.formatter.getBody().add(new DefaultBodyApplier(SpongeTexts.toText(bodyComponent)));
 
         this.rawSpongeMessage = Text.of(message);
         this.originalSpongeMessage = SpongeTexts.toText(component);
