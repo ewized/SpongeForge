@@ -58,7 +58,7 @@ public class MixinIntegratedServerAnonInner3 {
         Player player = (Player) playerIn;
         MessageChannel originalChannel = player.getMessageChannel();
         ClientConnectionEvent.Disconnect event = SpongeImplHooks.createClientConnectionEventDisconnect(Cause.of(NamedCause.source(player)),
-                originalChannel, Optional.of(originalChannel), Optional.empty(), Optional.empty(), player);
+                originalChannel, Optional.of(originalChannel), Optional.empty(), player);
         SpongeImpl.postEvent(event);
         // Doesn't make sense to send the event's message because all players
         // are quitting anyway

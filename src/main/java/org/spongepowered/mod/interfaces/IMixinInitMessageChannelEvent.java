@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 public interface IMixinInitMessageChannelEvent {
 
-    void initMessage(@Nullable Text original, @Nullable Text message);
+    void initMessage(@Nullable Text original);
 
     void initChannel(MessageChannel original, @Nullable MessageChannel channel);
 }

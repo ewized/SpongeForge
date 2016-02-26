@@ -64,11 +64,11 @@ public abstract class MixinSpongeImplHooks {
     }
 
     @Overwrite
-    public static ClientConnectionEvent.Join createClientConnectionEventJoin(Cause cause, MessageChannel originalChannel, Optional<MessageChannel> channel,
-            Optional<Text> originalMessage, Optional<Text> message, Player targetEntity) {
+    public static ClientConnectionEvent.Join createClientConnectionEventJoin(Cause cause, MessageChannel originalChannel,
+            Optional<MessageChannel> channel, Optional<Text> originalMessage, Player targetEntity) {
         final ClientConnectionEvent.Join event = (ClientConnectionEvent.Join) new PlayerEvent.PlayerLoggedInEvent((EntityPlayer) targetEntity);
         ((IMixinInitCause) event).initCause(cause);
-        ((IMixinInitMessageChannelEvent) event).initMessage(originalMessage.orElse(null), message.orElse(null));
+        ((IMixinInitMessageChannelEvent) event).initMessage(originalMessage.orElse(null));
         ((IMixinInitMessageChannelEvent) event).initChannel(originalChannel, channel.orElse(null));
         return event;
     }
@@ -83,12 +83,12 @@ public abstract class MixinSpongeImplHooks {
     }
 
     @Overwrite
-    public static ClientConnectionEvent.Disconnect createClientConnectionEventDisconnect(Cause cause, MessageChannel originalChannel, Optional<MessageChannel> channel,
-            Optional<Text> originalMessage, Optional<Text> message, Player targetEntity) {
+    public static ClientConnectionEvent.Disconnect createClientConnectionEventDisconnect(Cause cause, MessageChannel originalChannel,
+            Optional<MessageChannel> channel, Optional<Text> originalMessage, Player targetEntity) {
         final ClientConnectionEvent.Disconnect event =
                 (ClientConnectionEvent.Disconnect) new PlayerEvent.PlayerLoggedOutEvent((EntityPlayer) targetEntity);
         ((IMixinInitCause) event).initCause(cause);
-        ((IMixinInitMessageChannelEvent) event).initMessage(originalMessage.orElse(null), message.orElse(null));
+        ((IMixinInitMessageChannelEvent) event).initMessage(originalMessage.orElse(null));
         ((IMixinInitMessageChannelEvent) event).initChannel(originalChannel, channel.orElse(null));
         return event;
     }

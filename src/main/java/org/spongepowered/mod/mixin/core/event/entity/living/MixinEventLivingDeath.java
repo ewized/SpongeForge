@@ -55,7 +55,8 @@ import javax.annotation.Nullable;
 public abstract class MixinEventLivingDeath extends MixinEventLiving implements DestructEntityEvent.Death {
 
     private final MessageFormatter formatter = new MessageFormatter();
-    private Text originalMessage;
+    private boolean messageCancelled;
+    private Optional<Text> originalMessage;
     @Nullable private MessageChannel channel;
     private MessageChannel originalChannel;
     private Cause cause;
@@ -73,8 +74,8 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
             this.channel = MessageChannel.TO_NONE;
         }
 
-        this.originalMessage = SpongeTexts.toText(entity.getCombatTracker().getDeathMessage());
-        this.formatter.getBody().add(new DefaultBodyApplier(this.originalMessage));
+        this.originalMessage = Optional.of(SpongeTexts.toText(entity.getCombatTracker().getDeathMessage()));
+        getFormatter().getBody().add(new DefaultBodyApplier(this.originalMessage.get()));
         Optional<User> sourceCreator = Optional.empty();
 
         if (this.source instanceof EntityDamageSource) {
@@ -98,6 +99,20 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
     }
 
     @Override
+    public boolean isMessageCancelled() {
+        return this.messageCancelled;
+    }
+
+    @Override
+    public void setMessageCancelled(boolean cancelled) {
+        this.messageCancelled = cancelled;
+    }
+
+    public MessageFormatter getFormatter() {
+        return this.formatter;
+    }
+
+    @Override
     public MessageChannel getOriginalChannel() {
         return this.originalChannel;
     }
@@ -113,7 +128,7 @@ public abstract class MixinEventLivingDeath extends MixinEventLiving implements 
     }
 
     @Override
-    public Text getOriginalMessage() {
+    public Optional<Text> getOriginalMessage() {
         return this.originalMessage;
     }
 

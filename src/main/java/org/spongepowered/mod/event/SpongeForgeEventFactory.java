@@ -785,12 +785,12 @@ public class SpongeForgeEventFactory {
             return null;
         }
 
-        Optional<Text> spongeText = spongeEvent.getOriginalMessage();
-        if (!spongeText.isPresent()) {
+        if (!spongeEvent.isMessageCancelled()) {
             return null;
         }
 
-        IChatComponent component = SpongeTexts.toComponent(spongeText.get());
+        Text spongeText = spongeEvent.getOriginalMessage().get();
+        IChatComponent component = SpongeTexts.toComponent(spongeText);
         if (!(component instanceof ChatComponentTranslation)) {
             component = new ChatComponentTranslation("%s", component);
         }
@@ -817,11 +817,9 @@ public class SpongeForgeEventFactory {
             }
         } else if (forgeEvent instanceof LivingDeathEvent) {
             MessageChannelEvent spongeEvent = (MessageChannelEvent) forgeEvent;
-            Optional<Text> message = spongeEvent.getMessage();
-            if (message.isPresent()) {
-                if (message.get() != Text.of()) {
-                    spongeEvent.getChannel().ifPresent(channel -> channel.send(((LivingDeathEvent) forgeEvent).entityLiving, message.get()));
-                }
+            Text message = spongeEvent.getMessage();
+            if (!spongeEvent.isMessageCancelled() && !message.isEmpty()) {
+                spongeEvent.getChannel().ifPresent(channel -> channel.send(((LivingDeathEvent) forgeEvent).entityLiving, spongeEvent.getMessage()));
             }
         }
     }
