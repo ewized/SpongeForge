@@ -35,7 +35,6 @@ import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.event.message.MessageEvent;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageChannel;
-import org.spongepowered.api.text.transform.SimpleTextFormatter;
 import org.spongepowered.api.text.transform.SimpleTextTemplateApplier;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Final;
@@ -48,7 +47,6 @@ import org.spongepowered.common.interfaces.IMixinInitCause;
 import org.spongepowered.common.text.SpongeTexts;
 import org.spongepowered.mod.mixin.core.fml.common.eventhandler.MixinEvent;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -77,21 +75,18 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         // separates the player name and message. The above component will
         // always be a combination of the two components below when the event
         // is initialized by forge
+        // - windy
         this.forgeComponent = component;
         ChatComponentTranslation sourceComponent = new ChatComponentTranslation("chat.type.text", player.getDisplayName());
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
-        SimpleTextFormatter header = new SimpleTextFormatter();
-        SimpleTextTemplateApplier messageSource = new DefaultHeaderApplier();
-        messageSource.setParameter(MessageEvent.PARAM_MESSAGE_HEADER, SpongeTexts.toText(sourceComponent));
-        header.add(messageSource);
+        SimpleTextTemplateApplier header = new DefaultHeaderApplier();
+        header.setParameter(MessageEvent.PARAM_MESSAGE_HEADER, SpongeTexts.toText(sourceComponent));
+        this.formatter.getHeader().add(header);
 
-        SimpleTextFormatter body = new SimpleTextFormatter();
-        SimpleTextTemplateApplier messageBody = new DefaultBodyApplier();
-        messageBody.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
-        body.add(messageBody);
-
-        this.formatter.add(Arrays.asList(header, body, new SimpleTextFormatter()));
+        SimpleTextTemplateApplier body = new DefaultBodyApplier();
+        body.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
+        this.formatter.getBody().add(body);
 
         this.rawSpongeMessage = Text.of(message);
         this.originalSpongeMessage = SpongeTexts.toText(component);
