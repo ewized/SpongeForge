@@ -60,8 +60,6 @@ import javax.annotation.Nullable;
 @Mixin(value = ServerChatEvent.class, remap = false)
 public abstract class MixinEventPlayerChat extends MixinEvent implements MessageChannelEvent.Chat, IMixinInitCause {
 
-    private static final String PARAM_FORGE_MOD = "forge";
-
     private ChatComponentTranslation forgeComponent;
 
     private final MessageFormatter formatter = new MessageFormatter();
@@ -86,12 +84,12 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         ChatComponentTranslation sourceComponent = new ChatComponentTranslation("chat.type.text", player.getDisplayName());
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
-        SimpleTextFormatter header = new SimpleTextFormatter(1);
+        SimpleTextFormatter header = new SimpleTextFormatter();
         SimpleTextTemplateApplier messageSource = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_SOURCE)));
         messageSource.setParameter(MessageEvent.PARAM_MESSAGE_SOURCE, SpongeTexts.toText(sourceComponent));
         header.add(messageSource);
 
-        SimpleTextFormatter body = new SimpleTextFormatter(1);
+        SimpleTextFormatter body = new SimpleTextFormatter();
         SimpleTextTemplateApplier messageBody = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_BODY)));
         messageBody.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
         body.add(messageBody);
