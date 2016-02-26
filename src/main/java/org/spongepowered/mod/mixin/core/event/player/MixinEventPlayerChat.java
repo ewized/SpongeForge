@@ -24,6 +24,9 @@
  */
 package org.spongepowered.mod.mixin.core.event.player;
 
+import static org.spongepowered.api.text.TextTemplate.arg;
+import static org.spongepowered.api.text.TextTemplate.of;
+
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
@@ -32,11 +35,11 @@ import net.minecraftforge.event.ServerChatEvent;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.message.MessageChannelEvent;
+import org.spongepowered.api.event.message.MessageEvent;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.TextFormatter;
-import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.channel.MessageChannel;
-import org.spongepowered.api.text.chat.ChatMessageFormatter;
+import org.spongepowered.api.text.transform.SimpleTextFormatter;
+import org.spongepowered.api.text.transform.SimpleTextTemplateApplier;
 import org.spongepowered.api.util.annotation.NonnullByDefault;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,6 +51,7 @@ import org.spongepowered.common.interfaces.IMixinInitCause;
 import org.spongepowered.common.text.SpongeTexts;
 import org.spongepowered.mod.mixin.core.fml.common.eventhandler.MixinEvent;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -60,7 +64,7 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
 
     private ChatComponentTranslation forgeComponent;
 
-    private final ChatMessageFormatter formatter = new ChatMessageFormatter();
+    private final MessageFormatter formatter = new MessageFormatter();
     private Text originalSpongeMessage;
     private Text rawSpongeMessage;
     private MessageChannel originalChannel;
@@ -77,15 +81,25 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         // this is the same way forge constructs it's messages except it
         // separates the player name and message. The above component will
         // always be a combination of the two components below when the event
-        // is initialized by Forge
+        // is initialized by forge
         this.forgeComponent = component;
         ChatComponentTranslation sourceComponent = new ChatComponentTranslation("chat.type.text", player.getDisplayName());
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
+        SimpleTextFormatter header = new SimpleTextFormatter(1);
+        SimpleTextTemplateApplier messageSource = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_SOURCE)));
+        messageSource.setParameter(MessageEvent.PARAM_MESSAGE_SOURCE, SpongeTexts.toText(sourceComponent));
+        header.add(messageSource);
+
+        SimpleTextFormatter body = new SimpleTextFormatter(1);
+        SimpleTextTemplateApplier messageBody = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_BODY)));
+        messageBody.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
+        body.add(messageBody);
+
+        this.formatter.add(Arrays.asList(header, body, new SimpleTextFormatter()));
+
         this.rawSpongeMessage = Text.of(message);
         this.originalSpongeMessage = SpongeTexts.toText(component);
-        this.formatter.getHeader().setParameter(ChatMessageFormatter.PARAM_SOURCE, SpongeTexts.toText(sourceComponent));
-        this.formatter.getBody().setParameter(ChatMessageFormatter.PARAM_MESSAGE, SpongeTexts.toText(bodyComponent));
         this.originalChannel = this.channel = ((Player) player).getMessageChannel();
     }
 
@@ -105,7 +119,7 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     }
 
     @Override
-    public ChatMessageFormatter getFormatter() {
+    public MessageFormatter getFormatter() {
         return this.formatter;
     }
 
@@ -140,13 +154,8 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         ServerChatEvent event = (ServerChatEvent) forgeEvent;
         IChatComponent component = event.getComponent();
         if (!component.equals(this.forgeComponent)) {
-            // if the chat has been changed by a forge mod, abandon hope of
-            // separating into different parts, clear the formatter and put the
-            // message in it's own part
-            this.formatter.clear();
-            TextFormatter.Part body = this.formatter.getBody();
-            body.setTemplate(TextTemplate.of(TextTemplate.arg(PARAM_FORGE_MOD)));
-            this.formatter.add(body);
+            // TODO: what to do if a forge mod changes the text, therefore
+            // mucking up the partitioned message
         }
     }
 }
