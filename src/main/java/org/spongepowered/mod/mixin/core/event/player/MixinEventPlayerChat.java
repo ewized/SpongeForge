@@ -24,9 +24,6 @@
  */
 package org.spongepowered.mod.mixin.core.event.player;
 
-import static org.spongepowered.api.text.TextTemplate.arg;
-import static org.spongepowered.api.text.TextTemplate.of;
-
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
@@ -85,12 +82,12 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
         SimpleTextFormatter header = new SimpleTextFormatter();
-        SimpleTextTemplateApplier messageSource = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_HEADER)));
+        SimpleTextTemplateApplier messageSource = new DefaultHeaderApplier();
         messageSource.setParameter(MessageEvent.PARAM_MESSAGE_HEADER, SpongeTexts.toText(sourceComponent));
         header.add(messageSource);
 
         SimpleTextFormatter body = new SimpleTextFormatter();
-        SimpleTextTemplateApplier messageBody = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_BODY)));
+        SimpleTextTemplateApplier messageBody = new DefaultBodyApplier();
         messageBody.setParameter(MessageEvent.PARAM_MESSAGE_BODY, SpongeTexts.toText(bodyComponent));
         body.add(messageBody);
 
