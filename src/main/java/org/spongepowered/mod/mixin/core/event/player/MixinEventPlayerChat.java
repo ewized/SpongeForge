@@ -85,8 +85,8 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
         ChatComponentTranslation bodyComponent = new ChatComponentTranslation("chat.type.text", ForgeHooks.newChatWithLinks(message));
 
         SimpleTextFormatter header = new SimpleTextFormatter();
-        SimpleTextTemplateApplier messageSource = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_SOURCE)));
-        messageSource.setParameter(MessageEvent.PARAM_MESSAGE_SOURCE, SpongeTexts.toText(sourceComponent));
+        SimpleTextTemplateApplier messageSource = new SimpleTextTemplateApplier(of(arg(MessageEvent.PARAM_MESSAGE_HEADER)));
+        messageSource.setParameter(MessageEvent.PARAM_MESSAGE_HEADER, SpongeTexts.toText(sourceComponent));
         header.add(messageSource);
 
         SimpleTextFormatter body = new SimpleTextFormatter();
@@ -119,11 +119,6 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     @Override
     public MessageFormatter getFormatter() {
         return this.formatter;
-    }
-
-    @Override
-    public Text getMessage() {
-        return this.formatter.format();
     }
 
     @Override
