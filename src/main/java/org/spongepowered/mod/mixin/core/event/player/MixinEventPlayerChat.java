@@ -57,7 +57,7 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
 
     private final MessageFormatter formatter = new MessageFormatter();
     private boolean messageCancelled;
-    private Optional<Text> originalSpongeMessage;
+    private Text originalSpongeMessage;
     private Text rawSpongeMessage;
     private MessageChannel originalChannel;
     @Nullable private MessageChannel channel;
@@ -70,33 +70,16 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     @Inject(method = "<init>", at = @At("RETURN"))
     public void onConstructed(EntityPlayerMP player, String message, ChatComponentTranslation component, CallbackInfo ci) {
         this.forgeComponent = component;
-        Text source = null;
-        Text body = null;
-        for (Object arg : component.getFormatArgs()) {
-            if (arg instanceof IChatComponent) {
-                IChatComponent c = (IChatComponent) arg;
-                if (source == null) {
-                    source = SpongeTexts.toText(c);
-                } else {
-                    Text text = SpongeTexts.toText(c);
-                    if (body == null) {
-                        body = text;
-                    } else {
-                        body.concat(SpongeTexts.toText(c));
-                    }
-                }
-            }
-        }
-
-        if (source == null || body == null) {
+        Text[] chat = SpongeTexts.splitChatMessage(component);
+        if (chat[0] == null || chat[1] == null) {
             throw new IllegalStateException("Forge posted an invalid ServerChatEvent to the event bus.");
         }
 
-        getFormatter().getHeader().add(new DefaultHeaderApplier(source));
-        getFormatter().getBody().add(new DefaultBodyApplier(body));
+        getFormatter().getHeader().add(new DefaultHeaderApplier(chat[0]));
+        getFormatter().getBody().add(new DefaultBodyApplier(chat[1]));
 
         this.rawSpongeMessage = Text.of(message);
-        this.originalSpongeMessage = Optional.of(SpongeTexts.toText(component));
+        this.originalSpongeMessage = SpongeTexts.toText(component);
         this.originalChannel = this.channel = ((Player) player).getMessageChannel();
     }
 
@@ -126,7 +109,7 @@ public abstract class MixinEventPlayerChat extends MixinEvent implements Message
     }
 
     @Override
-    public Optional<Text> getOriginalMessage() {
+    public Text getOriginalMessage() {
         return this.originalSpongeMessage;
     }
 

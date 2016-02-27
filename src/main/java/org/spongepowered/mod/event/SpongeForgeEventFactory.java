@@ -785,11 +785,7 @@ public class SpongeForgeEventFactory {
             return null;
         }
 
-        if (!spongeEvent.getOriginalMessage().isPresent()) {
-            return null;
-        }
-
-        Text spongeText = spongeEvent.getOriginalMessage().get();
+        Text spongeText = spongeEvent.getOriginalMessage();
         IChatComponent component = SpongeTexts.toComponent(spongeText);
         if (!(component instanceof ChatComponentTranslation)) {
             component = new ChatComponentTranslation("%s", component);
@@ -798,7 +794,7 @@ public class SpongeForgeEventFactory {
         // Using toPlain here is fine, since the raw message from the client
         // can't have formatting.
         ServerChatEvent forgeEvent =
-                new ServerChatEvent((EntityPlayerMP) player.get(), spongeEvent.getOriginalMessage().get().toPlain(),
+                new ServerChatEvent((EntityPlayerMP) player.get(), spongeEvent.getOriginalMessage().toPlain(),
                         (ChatComponentTranslation) component);
         ((IMixinInitCause) forgeEvent).initCause(spongeEvent.getCause());
 
